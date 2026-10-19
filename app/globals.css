@@ -306,7 +306,8 @@ em { font-family:Georgia,"Times New Roman",serif; font-weight:400; }
 .wordmark { height:.93em; }
 .header-logo .wordmark { filter:brightness(0) invert(1); }
 .site-header[data-tone="dark"] .header-logo .wordmark { filter:brightness(0); }
-.intro-mark { font-size:clamp(230px,27vw,400px); }
+.intro-mark { width:max-content!important; max-width:none; overflow:visible!important; font-size:clamp(230px,27vw,400px); }
+.intro-mark>span { transform-origin:center center; }
 .wordmark { width:2.4em; overflow:visible; }
 .wordmark>span { letter-spacing:.055em; transform:scaleX(.66); }
 .hero-title .wordmark { font-size:90px; }
