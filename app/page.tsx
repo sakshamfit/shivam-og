@@ -97,17 +97,18 @@ function SocialIcon({ icon }: { icon: (typeof socialLinks)[number]["icon"] }) {
   return <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.6 3.6 12 3.6 12 3.6s-7.6 0-9.4.5A3 3 0 0 0 .5 6.2C0 8 0 12 0 12s0 4 .5 5.8a3 3 0 0 0 2.1 2.1c1.8.5 9.4.5 9.4.5s7.6 0 9.4-.5a3 3 0 0 0 2.1-2.1C24 16 24 12 24 12s0-4-.5-5.8ZM9.6 15.6V8.4l6.3 3.6z"/></svg>;
 }
 
-function IntroVideo({ paused }: { paused: boolean }) {
+function IntroVideo({ paused, orbitActive }: { paused: boolean; orbitActive: boolean }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
+  const [soundPreference, setSoundPreference] = useState<"auto" | "on" | "off">("auto");
+  const [posterQuality, setPosterQuality] = useState<"maxres" | "sd" | "local">("maxres");
   const [mediaState, setMediaState] = useState("loading");
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
     if (paused) video.pause();
     else {
-      video.muted = false;
       void video.play().then(() => setMediaState("playing")).catch(() => {
         // Browsers block autoplay with sound until a gesture; keep the image moving
         // silently and expose a one-tap sound control in the opening scene.
@@ -118,16 +119,32 @@ function IntroVideo({ paused }: { paused: boolean }) {
       });
     }
   }, [paused]);
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    // The opening soundtrack follows the opening/orbit scroll phase. Remember
+    // a user's opt-in so sound returns when they scroll back to the top.
+    const shouldMute = paused || !orbitActive || soundPreference === "off";
+    video.muted = shouldMute;
+    setMuted(shouldMute);
+  }, [paused, orbitActive, soundPreference]);
   const toggleSound = () => {
     const video = videoRef.current;
     if (!video) return;
-    video.muted = !muted;
-    setMuted(!muted);
-    if (muted) void video.play().catch(() => { video.muted = true; setMuted(true); });
+    const enable = muted;
+    setSoundPreference(enable ? "on" : "off");
+    video.muted = !enable || paused || !orbitActive;
+    setMuted(video.muted);
+    if (enable) void video.play().catch(() => { video.muted = true; setMuted(true); });
   };
+  const poster = posterQuality === "maxres"
+    ? "https://i.ytimg.com/vi/uXhkusf0Tp0/maxresdefault.jpg"
+    : posterQuality === "sd"
+      ? "https://i.ytimg.com/vi/uXhkusf0Tp0/sddefault.jpg"
+      : "/media/uXhkusf0Tp0.jpg";
   return <div className="intro-video-wrap">
     <div className="cinema-media intro-cinema-media" data-priority="true" data-playing={playing} data-local-playing={playing} data-media-state={playing ? "playing" : mediaState} data-paused={paused}>
-      <img src="/media/uXhkusf0Tp0.jpg" alt="" width="1920" height="1080" fetchPriority="high" />
+      <img src={poster} alt="" width="1920" height="1080" fetchPriority="high" onLoad={(event) => { if (posterQuality === "maxres" && event.currentTarget.naturalWidth < 960) setPosterQuality("sd"); else if (posterQuality === "sd" && event.currentTarget.naturalWidth < 600) setPosterQuality("local"); }} onError={() => setPosterQuality((quality) => quality === "maxres" ? "sd" : quality === "sd" ? "local" : quality)} />
       <video ref={videoRef} className="cinema-local-video intro-video" src="/media/intro.mp4" autoPlay muted={muted} loop playsInline preload="auto" aria-label="Shivam Photography opening film" onCanPlay={() => setMediaState("ready")} onPlaying={() => { setPlaying(true); setMediaState("playing"); }} onPause={() => setPlaying(false)} onError={() => setMediaState("unavailable")} />
     </div>
     <button className="intro-sound-toggle" onClick={toggleSound} aria-label={muted ? "Turn opening video sound on" : "Mute opening video sound"}>{muted ? "SOUND OFF · TAP TO ENABLE" : "SOUND ON"}<span aria-hidden="true">{muted ? "↗" : "♫"}</span></button>
@@ -144,6 +161,7 @@ export default function Home() {
   const [playerError, setPlayerError] = useState(false);
   const [origin, setOrigin] = useState("");           // for the YouTube embed origin param
   const [showcase, setShowcase] = useState(false);    // ?showcase=1 guided tour
+  const [orbitActive, setOrbitActive] = useState(true);
   useEffect(() => { setOrigin(window.location.origin); setShowcase(new URLSearchParams(window.location.search).get("showcase") === "1"); }, []);
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
@@ -168,7 +186,10 @@ export default function Home() {
       gsap.set(".red-field", { clipPath: "circle(0% at 50% 50%)" });
       gsap.set(".red-crescent", { autoAlpha: 0, scale: 0.6, rotation: -70 });
       // MASTER TIMELINE — pinned to .journey; scroll position is the playhead.
-      const tl = gsap.timeline({ defaults: { ease: "power2.inOut" }, scrollTrigger: { trigger: ".journey", start: "top top", end: "bottom bottom", scrub: 0.55, invalidateOnRefresh: true } });
+      const tl = gsap.timeline({ defaults: { ease: "power2.inOut" }, onUpdate: (self) => {
+        const active = self.time() <= 3.6;
+        setOrbitActive((current) => current === active ? current : active);
+      }, scrollTrigger: { trigger: ".journey", start: "top top", end: "bottom bottom", scrub: 0.55, invalidateOnRefresh: true } });
       tl.to(".hero-copy, .hero-footer", { opacity: 0, y: -35, duration: 0.55 }, 0.15)
         .to(".opening-panel", { clipPath: "circle(44vmin at 50% 50%)", scale: mobile ? 0.61 : 0.47, x: 0, y: 0, duration: 1.5 }, 0.35)
         .to(".opening-panel", { scale: 0.1, autoAlpha: 0, rotation: -28, duration: 0.8 }, 1.7)
@@ -266,7 +287,7 @@ export default function Home() {
         <div className="mosaic" id="brand-shoot" aria-hidden="true">{tiles.map(([x, y, w, video], i) => <div key={i} data-x={x} data-y={y} className={`mosaic-tile tile-${i}`} style={{ left: `${x}%`, top: `${y}%`, width: `${w}%` } as CSSProperties}><video src={`/media/${video}`} muted autoPlay loop playsInline preload="auto" aria-hidden="true" /></div>)}</div>
         <div className="center-mark" aria-hidden="true"><Wordmark /></div>
         <div className="opening-panel">
-          <IntroVideo paused={paused || selected !== null} />
+          <IntroVideo paused={paused || selected !== null} orbitActive={orbitActive} />
           <div className="image-shade" />
           <div className="hero-copy"><p className="eyebrow">VIDEOGRAPHER · FILM EDITOR</p><h1>Stories that<br />stay in <em>motion.</em></h1><div className="hero-title"><span>SHIVAM<br />PHOTOGRAPHY</span><Wordmark /></div></div>
           <div className="hero-footer"><span>SCROLL TO EXPLORE THE FILMS</span><span className="scroll-indicator" aria-hidden="true" /><button onClick={() => openFilm(0)} className="text-link">PLAY A HIGHLIGHT <span className="play-icon" /></button></div>
