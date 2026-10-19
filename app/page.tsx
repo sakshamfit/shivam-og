@@ -66,13 +66,13 @@ const films = [
   { title: "Narmata & Harshvardhan", subtitle: "WEDDING FILM · 2024", id: "DoS-VfsWfWw", image: "DoS-VfsWfWw.jpg", text: "A wedding highlight preserving the feeling of Narmata and Harshvardhan’s day." },
   { title: "Sweta & Shyam", subtitle: "ENGAGEMENT FILM · 2024", id: "oMQvQhuHgHE", image: "oMQvQhuHgHE.jpg", text: "Sweta and Shyam’s engagement, remembered in motion." },
 ];
-// Stills used by the rotating image mosaic inside .journey.
-const orbitImages = ["uXhkusf0Tp0.jpg", "shivam-profile.jpg", "5VKSzMeBLTU.jpg", "T_JV_L7GZfo.jpg", "aD03U6Jz13s.jpg", "DoS-VfsWfWw.jpg", "oMQvQhuHgHE.jpg", "uXhkusf0Tp0.jpg", "5VKSzMeBLTU.jpg", "T_JV_L7GZfo.jpg"];
-// Lay the mosaic tiles out on a 43%-radius orbit and emit [x%, y%, width%, file].
+// The jewellery product shoots now form the moving image orbit in the opening.
+const orbitVideos = ["product-shoot-01.mp4", "product-shoot-02.mp4", "product-shoot-03.mp4", "product-shoot-04.mp4", "product-shoot-05.mp4"];
+// Lay the mosaic tiles out on a 43%-radius orbit and emit [x%, y%, width%, video].
 // data-x/data-y are read back by the timeline to scatter the tiles from centre.
-const tiles = orbitImages.map((image, i) => {
-  const angle = i / orbitImages.length * Math.PI * 2 - Math.PI / 2;
-  return [50 + Math.cos(angle) * 43, 50 + Math.sin(angle) * 43, i % 3 === 0 ? 18 : 14, image] as const;
+const tiles = orbitVideos.map((video, i) => {
+  const angle = i / orbitVideos.length * Math.PI * 2 - Math.PI / 2;
+  return [50 + Math.cos(angle) * 43, 50 + Math.sin(angle) * 43, i % 3 === 0 ? 18 : 14, video] as const;
 });
 
 // Shivam's wordmark, reused as the intro mark, hero lockup, chapter menu and end card.
@@ -84,18 +84,11 @@ const socialLinks = [
   { label: "YouTube", href: "https://www.youtube.com/watch?v=uXhkusf0Tp0", icon: "youtube" },
 ] as const;
 
-const productShoots = [
-  { number: "01", src: "/media/product-shoot-01.mp4" },
-  { number: "02", src: "/media/product-shoot-02.mp4" },
-  { number: "03", src: "/media/product-shoot-03.mp4" },
-  { number: "04", src: "/media/product-shoot-04.mp4" },
-  { number: "05", src: "/media/product-shoot-05.mp4" },
-];
 // Group the supplied moving-image work by the kind of story it tells.
-const filmSuites = [
-  { title: "Event Suite", note: "CELEBRATIONS · MILESTONES", ids: ["aD03U6Jz13s"] },
-  { title: "Personal Suite", note: "ENGAGEMENT STORIES", ids: ["uXhkusf0Tp0", "5VKSzMeBLTU", "T_JV_L7GZfo", "oMQvQhuHgHE"] },
-  { title: "Wedding Suite", note: "WEDDING FILM", ids: ["DoS-VfsWfWw"] },
+const filmShoots = [
+  { title: "Event Shoot", note: "CELEBRATIONS · MILESTONES", ids: ["aD03U6Jz13s"] },
+  { title: "Personal Shoot", note: "ENGAGEMENT STORIES", ids: ["uXhkusf0Tp0", "5VKSzMeBLTU", "T_JV_L7GZfo", "oMQvQhuHgHE"] },
+  { title: "Wedding Shoot", note: "WEDDING FILM", ids: ["DoS-VfsWfWw"] },
 ];
 
 function SocialIcon({ icon }: { icon: (typeof socialLinks)[number]["icon"] }) {
@@ -107,16 +100,37 @@ function SocialIcon({ icon }: { icon: (typeof socialLinks)[number]["icon"] }) {
 function IntroVideo({ paused }: { paused: boolean }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
+  const [muted, setMuted] = useState(false);
   const [mediaState, setMediaState] = useState("loading");
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
     if (paused) video.pause();
-    else void video.play().catch(() => setMediaState("tap-to-play"));
+    else {
+      video.muted = false;
+      void video.play().then(() => setMediaState("playing")).catch(() => {
+        // Browsers block autoplay with sound until a gesture; keep the image moving
+        // silently and expose a one-tap sound control in the opening scene.
+        video.muted = true;
+        setMuted(true);
+        setMediaState("sound-required");
+        void video.play().catch(() => setMediaState("tap-to-play"));
+      });
+    }
   }, [paused]);
-  return <div className="cinema-media intro-cinema-media" data-priority="true" data-playing={playing} data-local-playing={playing} data-media-state={playing ? "playing" : mediaState} data-paused={paused}>
-    <img src="/media/uXhkusf0Tp0.jpg" alt="" width="1920" height="1080" fetchPriority="high" />
-    <video ref={videoRef} className="cinema-local-video intro-video" src="/media/intro.mp4" autoPlay muted loop playsInline preload="auto" aria-label="Shivam Photography opening film" onCanPlay={() => setMediaState("ready")} onPlaying={() => { setPlaying(true); setMediaState("playing"); }} onPause={() => setPlaying(false)} onError={() => setMediaState("unavailable")} />
+  const toggleSound = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = !muted;
+    setMuted(!muted);
+    if (muted) void video.play().catch(() => { video.muted = true; setMuted(true); });
+  };
+  return <div className="intro-video-wrap">
+    <div className="cinema-media intro-cinema-media" data-priority="true" data-playing={playing} data-local-playing={playing} data-media-state={playing ? "playing" : mediaState} data-paused={paused}>
+      <img src="/media/uXhkusf0Tp0.jpg" alt="" width="1920" height="1080" fetchPriority="high" />
+      <video ref={videoRef} className="cinema-local-video intro-video" src="/media/intro.mp4" autoPlay muted={muted} loop playsInline preload="auto" aria-label="Shivam Photography opening film" onCanPlay={() => setMediaState("ready")} onPlaying={() => { setPlaying(true); setMediaState("playing"); }} onPause={() => setPlaying(false)} onError={() => setMediaState("unavailable")} />
+    </div>
+    <button className="intro-sound-toggle" onClick={toggleSound} aria-label={muted ? "Turn opening video sound on" : "Mute opening video sound"}>{muted ? "SOUND OFF · TAP TO ENABLE" : "SOUND ON"}<span aria-hidden="true">{muted ? "↗" : "♫"}</span></button>
   </div>;
 }
 
@@ -249,7 +263,7 @@ export default function Home() {
     <section className="journey" id="home" aria-label="Shivam Photography portfolio">
       <div className="journey-stage">
         <div className="red-field" /><div className="red-crescent" aria-hidden="true" />
-        <div className="mosaic" aria-hidden="true">{tiles.map(([x, y, w, img], i) => <div key={i} data-x={x} data-y={y} className={`mosaic-tile tile-${i}`} style={{ left: `${x}%`, top: `${y}%`, width: `${w}%` } as CSSProperties}><img src={`/media/${img}`} alt="" width="2048" height="1152" loading={i < 5 ? "eager" : "lazy"} /></div>)}</div>
+        <div className="mosaic" id="brand-shoot" aria-hidden="true">{tiles.map(([x, y, w, video], i) => <div key={i} data-x={x} data-y={y} className={`mosaic-tile tile-${i}`} style={{ left: `${x}%`, top: `${y}%`, width: `${w}%` } as CSSProperties}><video src={`/media/${video}`} muted autoPlay loop playsInline preload="auto" aria-hidden="true" /></div>)}</div>
         <div className="center-mark" aria-hidden="true"><Wordmark /></div>
         <div className="opening-panel">
           <IntroVideo paused={paused || selected !== null} />
@@ -269,19 +283,10 @@ export default function Home() {
     {/* CHAPTER 2 — "HIS WORLD": full-bleed 2.39:1 action panel. */}
     <section className="wide-scene" id="story" aria-label="Shivam's approach"><div className="wide-media"><CinemaMedia image="5VKSzMeBLTU.jpg" id="5VKSzMeBLTU" label="Avinash and Shaloo — engagement film" paused={paused || selected !== null} /><div className="wide-shade" /></div><div className="wide-copy"><p className="eyebrow">THE ART OF THE HIGHLIGHT</p><h2>Feel it<br />all <em>again.</em></h2><p>Honest moments.<br />Thoughtful edits. Lasting stories.</p></div><div className="wide-bottom"><span>SHIVAM PHOTOGRAPHY</span><span>STORIES IN MOTION</span></div></section>
     <section className="world" id="world" aria-label="Shivam's creative approach"><div className="world-stage"><div className="world-copy"><p className="eyebrow">A STORY IN EVERY FRAME</p><h2>Natural emotion.<br />Careful composition.<br /><em>Timeless films.</em></h2><span>VIDEOGRAPHY · EDITING · STORYTELLING</span></div><div className="world-constellation" aria-hidden="true">{["uXhkusf0Tp0.jpg", "5VKSzMeBLTU.jpg", "T_JV_L7GZfo.jpg", "aD03U6Jz13s.jpg", "DoS-VfsWfWw.jpg"].map((img, i) => <div className={`world-tile world-tile-${i}`} key={i} data-index={i}><img src={`/media/${img}`} alt="" loading="lazy" /></div>)}</div></div></section>
-    <section className="product-shoot" id="brand-suite" aria-label="Brand suite jewellery product shoots">
-      <div className="product-shoot-heading"><div><p className="eyebrow">BRAND SUITE · LIGHT · DETAIL · CRAFT</p><h2>Product <em>Shoot</em></h2></div><button className="product-book-link" onClick={() => setBookingOpen(true)}>BOOK A PRODUCT SHOOT <span aria-hidden="true">↗</span></button></div>
-      <div className="product-shoot-grid">
-        {productShoots.map((shot) => <article className="product-shot" key={shot.number}>
-          <div className="product-shot-media"><video src={shot.src} autoPlay muted loop playsInline controls preload="auto" aria-label={`Jewellery product shoot ${shot.number}`} /></div>
-          <div className="product-shot-caption"><span>PRODUCT FILM</span><span>{shot.number} / 05</span></div>
-        </article>)}
-      </div>
-    </section>
     {/* CHAPTER 4 — "THE OG ARCHIVE": the three official films as numbered chapters. */}
-    <section className="films" id="films" aria-label="Shivam's video portfolio"><div className="film-section-label"><span>THE FILM SUITES</span><span>EVENTS · PERSONAL STORIES · WEDDINGS · BRANDS</span></div>{filmSuites.map((suite) => <div className="film-suite" id={suite.title.toLowerCase().replaceAll(" ", "-")} key={suite.title}><div className="suite-heading"><h2>{suite.title}</h2><span>{suite.note}</span></div>{suite.ids.map((id) => { const film = films.find((entry) => entry.id === id)!; const i = films.indexOf(film); return <article className="film-chapter" key={film.id}><div className="chapter-topline"><span>{String(i + 1).padStart(2, "0")}</span><span>{film.subtitle}</span><span>SHIVAM PHOTOGRAPHY</span></div><h2 className="chapter-title">{film.title}</h2><button className="film-image" onClick={() => openFilm(i)} aria-label={`Play ${film.title}`}><CinemaMedia image={film.image} id={film.id} label={film.title} paused={paused || selected !== null} /><span className="chapter-play"><span className="play-icon" />PLAY FILM</span></button><div className="chapter-caption"><p>{film.text}</p><button onClick={() => openFilm(i)} className="text-link">WATCH <span className="play-icon" /></button></div></article>;})}</div>)}
-      <div className="suite-heading empty-suite" id="photography-suite"><h2>Photography Suite</h2><span>STILLS & PORTRAITS</span></div>
-      <div className="suite-heading empty-suite" id="model-suite"><h2>Model Suite</h2><span>MODEL FILMS COMING SOON</span></div>
+    <section className="films" id="films" aria-label="Shivam's video portfolio"><div className="film-section-label"><span>THE FILM SHOOTS</span><span>EVENTS · PERSONAL STORIES · WEDDINGS · BRANDS</span></div>{filmShoots.map((shoot) => <div className="film-shoot" id={shoot.title.toLowerCase().replaceAll(" ", "-")} key={shoot.title}><div className="shoot-heading"><h2>{shoot.title}</h2><span>{shoot.note}</span></div>{shoot.ids.map((id) => { const film = films.find((entry) => entry.id === id)!; const i = films.indexOf(film); return <article className="film-chapter" key={film.id}><div className="chapter-topline"><span>{String(i + 1).padStart(2, "0")}</span><span>{film.subtitle}</span><span>SHIVAM PHOTOGRAPHY</span></div><h2 className="chapter-title">{film.title}</h2><button className="film-image" onClick={() => openFilm(i)} aria-label={`Play ${film.title}`}><CinemaMedia image={film.image} id={film.id} label={film.title} paused={paused || selected !== null} /><span className="chapter-play"><span className="play-icon" />PLAY FILM</span></button><div className="chapter-caption"><p>{film.text}</p><button onClick={() => openFilm(i)} className="text-link">WATCH <span className="play-icon" /></button></div></article>;})}</div>)}
+      <div className="shoot-heading empty-shoot" id="photography-shoot"><h2>Photography Shoot</h2><span>STILLS & PORTRAITS</span></div>
+      <div className="shoot-heading empty-shoot" id="model-shoot"><h2>Model Shoot</h2><span>MODEL FILMS COMING SOON</span></div>
     </section>
     {/* CHAPTER 5 — END CARD: credits, trailer CTA and the fan-site legal line. */}
     <footer className="end-card" id="end"><p className="eyebrow">SHIVAM PHOTOGRAPHY</p><div className="end-mark"><span>STORIES IN MOTION</span><Wordmark /></div><div className="end-car-card"><CinemaMedia image="oMQvQhuHgHE.jpg" id="oMQvQhuHgHE" aperture={16 / 9} className="footer-title-media" label="Sweta and Shyam — engagement film" paused={paused || selected !== null} /><div className="car-title"><span>SHIVAM PHOTOGRAPHY</span><Wordmark /></div></div><div className="end-actions"><button onClick={() => navigate("films")}>EXPLORE THE FILMS <span className="play-icon" /></button><button onClick={() => navigate("home")}>BACK TO THE BEGINNING</button></div><div className="credits"><span>VIDEOGRAPHY</span><span>FILM EDITING</span><span>STORYTELLING</span></div><div className="legal"><span>SHIVAM PHOTOGRAPHY</span><span>FILMS COURTESY OF THE CREATOR’S YOUTUBE CHANNEL.</span><a href="https://www.instagram.com/shivam___photography_?obrf=MXJwY2ttdDFwOHFvbg==" target="_blank" rel="noreferrer">INSTAGRAM ↗</a></div></footer>
@@ -290,7 +295,7 @@ export default function Home() {
     <div className="playback-control">{!showcase && <a href="?showcase=1">55-SECOND SHOWCASE</a>}<button onClick={() => setPaused(!paused)} aria-label={paused ? "Resume background films" : "Pause background films"}>{paused ? "PLAY MOTION" : "PAUSE FILMS"}<span aria-hidden="true">{paused ? "▷" : "Ⅱ"}</span></button></div>
     <div className="progress-line" aria-hidden="true" />
     {/* Chapter INDEX sheet — jump straight to any of the four chapters. */}
-    <Sheet open={menu} onOpenChange={setMenu}><SheetContent className="chapter-menu"><SheetTitle className="menu-heading">SHIVAM · INDEX</SheetTitle><SheetDescription className="menu-description">Enter at any chapter.</SheetDescription><nav>{[["home", "The story"], ["story", "The approach"], ["world", "Behind the frames"], ["brand-suite", "Brand suite"], ["event-suite", "Event suite"], ["photography-suite", "Photography suite"], ["personal-suite", "Personal suite"], ["wedding-suite", "Wedding suite"], ["model-suite", "Model suite"], ["end", "Contact"]].map(([id, label], i) => <button key={id} onClick={() => navigate(id)}><span>{String(i + 1).padStart(2, "0")}</span>{label}</button>)}</nav><Wordmark /><p>SHIVAM PHOTOGRAPHY<br />VIDEOGRAPHER · FILM EDITOR</p></SheetContent></Sheet>
+    <Sheet open={menu} onOpenChange={setMenu}><SheetContent className="chapter-menu"><SheetTitle className="menu-heading">SHIVAM · INDEX</SheetTitle><SheetDescription className="menu-description">Enter at any chapter.</SheetDescription><nav>{[["home", "The story"], ["story", "The approach"], ["world", "Behind the frames"], ["brand-shoot", "Brand shoot"], ["event-shoot", "Event shoot"], ["photography-shoot", "Photography shoot"], ["personal-shoot", "Personal shoot"], ["wedding-shoot", "Wedding shoot"], ["model-shoot", "Model shoot"], ["end", "Contact"]].map(([id, label], i) => <button key={id} onClick={() => navigate(id)}><span>{String(i + 1).padStart(2, "0")}</span>{label}</button>)}</nav><Wordmark /><p>SHIVAM PHOTOGRAPHY<br />VIDEOGRAPHER · FILM EDITOR</p></SheetContent></Sheet>
     {/* Film modal — official YouTube player with sound and controls, plus a
         fallback link if the embed is blocked in this browser. */}
     <Dialog open={selected !== null} onOpenChange={(v) => { if (!v) setSelected(null); }}><DialogContent className="film-dialog"><DialogTitle>{selected !== null ? films[selected].title : "Shivam Photography"}</DialogTitle><DialogDescription>YouTube film by Shivam Photography — plays in high quality with sound & controls.</DialogDescription>{selected !== null && <><iframe title={films[selected].title} allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen referrerPolicy="strict-origin-when-cross-origin" onError={() => setPlayerError(true)} src={`https://www.youtube.com/embed/${films[selected].id}?autoplay=1&rel=0&playsinline=1&vq=hd1080&hd=1&quality=hd1080&modestbranding=1&enablejsapi=1&origin=${encodeURIComponent(origin)}&widget_referrer=${encodeURIComponent(origin)}`} /><a className="player-fallback" target="_blank" rel="noreferrer" href={`https://www.youtube.com/watch?v=${films[selected].id}`}>{playerError ? "Player unavailable — watch on YouTube" : "Open film on YouTube"}</a></>}</DialogContent></Dialog>
