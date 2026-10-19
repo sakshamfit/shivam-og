@@ -78,9 +78,46 @@ const tiles = orbitImages.map((image, i) => {
 // Shivam's wordmark, reused as the intro mark, hero lockup, chapter menu and end card.
 function Wordmark({ className = "" }: { className?: string }) { return <span className={`wordmark ${className}`} role="img" aria-label="Shivam Photography"><span>SHIVAM</span></span>; }
 
+const socialLinks = [
+  { label: "Instagram", href: "https://www.instagram.com/shivam___photography_?obrf=MXJwY2ttdDFwOHFvbg==", icon: "instagram" },
+  { label: "Facebook", href: "https://www.facebook.com/", icon: "facebook" },
+  { label: "YouTube", href: "https://www.youtube.com/watch?v=uXhkusf0Tp0", icon: "youtube" },
+] as const;
+
+const productShoots = [
+  { number: "01", src: "/media/product-shoot-01.mp4" },
+  { number: "02", src: "/media/product-shoot-02.mp4" },
+  { number: "03", src: "/media/product-shoot-03.mp4" },
+  { number: "04", src: "/media/product-shoot-04.mp4" },
+  { number: "05", src: "/media/product-shoot-05.mp4" },
+];
+
+function SocialIcon({ icon }: { icon: (typeof socialLinks)[number]["icon"] }) {
+  if (icon === "instagram") return <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" strokeWidth="1.8"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" strokeWidth="1.8"/><circle cx="17.5" cy="6.7" r="1.1" fill="currentColor"/></svg>;
+  if (icon === "facebook") return <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M13.5 21v-8h2.7l.4-3.1h-3.1v-2c0-.9.3-1.5 1.6-1.5h1.7V3.6c-.3 0-1.3-.1-2.5-.1-2.5 0-4.2 1.5-4.2 4.3v2.1H7.3V13h2.8v8z"/></svg>;
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.6 3.6 12 3.6 12 3.6s-7.6 0-9.4.5A3 3 0 0 0 .5 6.2C0 8 0 12 0 12s0 4 .5 5.8a3 3 0 0 0 2.1 2.1c1.8.5 9.4.5 9.4.5s7.6 0 9.4-.5a3 3 0 0 0 2.1-2.1C24 16 24 12 24 12s0-4-.5-5.8ZM9.6 15.6V8.4l6.3 3.6z"/></svg>;
+}
+
+function IntroVideo({ paused }: { paused: boolean }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [playing, setPlaying] = useState(false);
+  const [mediaState, setMediaState] = useState("loading");
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (paused) video.pause();
+    else void video.play().catch(() => setMediaState("tap-to-play"));
+  }, [paused]);
+  return <div className="cinema-media intro-cinema-media" data-priority="true" data-playing={playing} data-local-playing={playing} data-media-state={playing ? "playing" : mediaState} data-paused={paused}>
+    <img src="/media/uXhkusf0Tp0.jpg" alt="" width="1920" height="1080" fetchPriority="high" />
+    <video ref={videoRef} className="cinema-local-video intro-video" src="/media/intro.mp4" autoPlay muted loop playsInline preload="auto" aria-label="Shivam Photography opening film" onCanPlay={() => setMediaState("ready")} onPlaying={() => { setPlaying(true); setMediaState("playing"); }} onPause={() => setPlaying(false)} onError={() => setMediaState("unavailable")} />
+  </div>;
+}
+
 export default function Home() {
   const main = useRef<HTMLElement>(null);
   const [menu, setMenu] = useState(false);            // chapter INDEX sheet
+  const [bookingOpen, setBookingOpen] = useState(false);
   const [selected, setSelected] = useState<number | null>(null); // open film chapter
   const [paused, setPaused] = useState(false);        // global PAUSE FILMS toggle
   const [introDone, setIntroDone] = useState(false);  // red splash finished
@@ -194,7 +231,13 @@ export default function Home() {
     <header className="site-header">
       <button className="header-film" onClick={() => navigate("home")}>SHIVAM PHOTOGRAPHY</button>
       <button className="header-logo" aria-label="Back to opening" onClick={() => navigate("home")}><Wordmark /></button>
-      <button className="menu-toggle" onClick={() => setMenu(true)} aria-label="Open chapter navigation">INDEX <span><i /><i /></span></button>
+      <div className="header-actions">
+        <nav className="social-links" aria-label="Shivam Photography social links">
+          {socialLinks.map((link) => <a className="social-link" key={link.label} href={link.href} target="_blank" rel="noreferrer" aria-label={`Open Shivam Photography on ${link.label}`} title={link.label}><SocialIcon icon={link.icon} /></a>)}
+        </nav>
+        <button className="booking-toggle" onClick={() => setBookingOpen(true)}>BOOK <span aria-hidden="true">↗</span></button>
+        <button className="menu-toggle" onClick={() => setMenu(true)} aria-label="Open chapter navigation">INDEX <span><i /><i /></span></button>
+      </div>
     </header>
     {/* CHAPTER 1 — "THE RETURN OF OG": the sticky, scroll-driven journey. */}
     <section className="journey" id="home" aria-label="Shivam Photography portfolio">
@@ -203,7 +246,7 @@ export default function Home() {
         <div className="mosaic" aria-hidden="true">{tiles.map(([x, y, w, img], i) => <div key={i} data-x={x} data-y={y} className={`mosaic-tile tile-${i}`} style={{ left: `${x}%`, top: `${y}%`, width: `${w}%` } as CSSProperties}><img src={`/media/${img}`} alt="" width="2048" height="1152" loading={i < 5 ? "eager" : "lazy"} /></div>)}</div>
         <div className="center-mark" aria-hidden="true"><Wordmark /></div>
         <div className="opening-panel">
-          <CinemaMedia image="uXhkusf0Tp0.jpg" id="uXhkusf0Tp0" priority label="Shivam Photography — engagement film" paused={paused || selected !== null} />
+          <IntroVideo paused={paused || selected !== null} />
           <div className="image-shade" />
           <div className="hero-copy"><p className="eyebrow">VIDEOGRAPHER · FILM EDITOR</p><h1>Stories that<br />stay in <em>motion.</em></h1><div className="hero-title"><span>SHIVAM<br />PHOTOGRAPHY</span><Wordmark /></div></div>
           <div className="hero-footer"><span>SCROLL TO EXPLORE THE FILMS</span><span className="scroll-indicator" aria-hidden="true" /><button onClick={() => openFilm(0)} className="text-link">PLAY A HIGHLIGHT <span className="play-icon" /></button></div>
@@ -220,6 +263,15 @@ export default function Home() {
     {/* CHAPTER 2 — "HIS WORLD": full-bleed 2.39:1 action panel. */}
     <section className="wide-scene" id="story" aria-label="Shivam's approach"><div className="wide-media"><CinemaMedia image="5VKSzMeBLTU.jpg" id="5VKSzMeBLTU" label="Avinash and Shaloo — engagement film" paused={paused || selected !== null} /><div className="wide-shade" /></div><div className="wide-copy"><p className="eyebrow">THE ART OF THE HIGHLIGHT</p><h2>Feel it<br />all <em>again.</em></h2><p>Honest moments.<br />Thoughtful edits. Lasting stories.</p></div><div className="wide-bottom"><span>SHIVAM PHOTOGRAPHY</span><span>STORIES IN MOTION</span></div></section>
     <section className="world" id="world" aria-label="Shivam's creative approach"><div className="world-stage"><div className="world-copy"><p className="eyebrow">A STORY IN EVERY FRAME</p><h2>Natural emotion.<br />Careful composition.<br /><em>Timeless films.</em></h2><span>VIDEOGRAPHY · EDITING · STORYTELLING</span></div><div className="world-constellation" aria-hidden="true">{["uXhkusf0Tp0.jpg", "5VKSzMeBLTU.jpg", "T_JV_L7GZfo.jpg", "aD03U6Jz13s.jpg", "DoS-VfsWfWw.jpg"].map((img, i) => <div className={`world-tile world-tile-${i}`} key={i} data-index={i}><img src={`/media/${img}`} alt="" loading="lazy" /></div>)}</div></div></section>
+    <section className="product-shoot" id="product-shoot" aria-label="Jewellery product shoots">
+      <div className="product-shoot-heading"><div><p className="eyebrow">LIGHT · DETAIL · CRAFT</p><h2>Product <em>Shoot</em></h2></div><button className="product-book-link" onClick={() => setBookingOpen(true)}>BOOK A PRODUCT SHOOT <span aria-hidden="true">↗</span></button></div>
+      <div className="product-shoot-grid">
+        {productShoots.map((shot) => <article className="product-shot" key={shot.number}>
+          <div className="product-shot-media"><video src={shot.src} autoPlay muted loop playsInline controls preload="auto" aria-label={`Jewellery product shoot ${shot.number}`} /></div>
+          <div className="product-shot-caption"><span>PRODUCT FILM</span><span>{shot.number} / 05</span></div>
+        </article>)}
+      </div>
+    </section>
     {/* CHAPTER 4 — "THE OG ARCHIVE": the three official films as numbered chapters. */}
     <section className="films" id="films" aria-label="Shivam's video portfolio"><div className="film-section-label"><span>SELECTED FILMS</span><span>WEDDINGS · ENGAGEMENTS · CELEBRATIONS</span></div>{films.map((film, i) => <article className="film-chapter" key={film.id}><div className="chapter-topline"><span>{String(i + 1).padStart(2, "0")}</span><span>{film.subtitle}</span><span>SHIVAM PHOTOGRAPHY</span></div><h2 className="chapter-title">{film.title}</h2><button className="film-image" onClick={() => openFilm(i)} aria-label={`Play ${film.title}`}><CinemaMedia image={film.image} id={film.id} label={film.title} paused={paused || selected !== null} /><span className="chapter-play"><span className="play-icon" />PLAY FILM</span></button><div className="chapter-caption"><p>{film.text}</p><button onClick={() => openFilm(i)} className="text-link">WATCH <span className="play-icon" /></button></div></article>)}</section>
     {/* CHAPTER 5 — END CARD: credits, trailer CTA and the fan-site legal line. */}
@@ -229,9 +281,10 @@ export default function Home() {
     <div className="playback-control">{!showcase && <a href="?showcase=1">55-SECOND SHOWCASE</a>}<button onClick={() => setPaused(!paused)} aria-label={paused ? "Resume background films" : "Pause background films"}>{paused ? "PLAY MOTION" : "PAUSE FILMS"}<span aria-hidden="true">{paused ? "▷" : "Ⅱ"}</span></button></div>
     <div className="progress-line" aria-hidden="true" />
     {/* Chapter INDEX sheet — jump straight to any of the four chapters. */}
-    <Sheet open={menu} onOpenChange={setMenu}><SheetContent className="chapter-menu"><SheetTitle className="menu-heading">SHIVAM · INDEX</SheetTitle><SheetDescription className="menu-description">Enter at any chapter.</SheetDescription><nav>{[["home", "The story"], ["story", "The approach"], ["world", "Behind the frames"], ["films", "The films"], ["end", "Contact"]].map(([id, label], i) => <button key={id} onClick={() => navigate(id)}><span>{String(i + 1).padStart(2, "0")}</span>{label}</button>)}</nav><Wordmark /><p>SHIVAM PHOTOGRAPHY<br />VIDEOGRAPHER · FILM EDITOR</p></SheetContent></Sheet>
+    <Sheet open={menu} onOpenChange={setMenu}><SheetContent className="chapter-menu"><SheetTitle className="menu-heading">SHIVAM · INDEX</SheetTitle><SheetDescription className="menu-description">Enter at any chapter.</SheetDescription><nav>{[["home", "The story"], ["story", "The approach"], ["world", "Behind the frames"], ["product-shoot", "Product shoot"], ["films", "The films"], ["end", "Contact"]].map(([id, label], i) => <button key={id} onClick={() => navigate(id)}><span>{String(i + 1).padStart(2, "0")}</span>{label}</button>)}</nav><Wordmark /><p>SHIVAM PHOTOGRAPHY<br />VIDEOGRAPHER · FILM EDITOR</p></SheetContent></Sheet>
     {/* Film modal — official YouTube player with sound and controls, plus a
         fallback link if the embed is blocked in this browser. */}
     <Dialog open={selected !== null} onOpenChange={(v) => { if (!v) setSelected(null); }}><DialogContent className="film-dialog"><DialogTitle>{selected !== null ? films[selected].title : "Shivam Photography"}</DialogTitle><DialogDescription>YouTube film by Shivam Photography — plays in high quality with sound & controls.</DialogDescription>{selected !== null && <><iframe title={films[selected].title} allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen referrerPolicy="strict-origin-when-cross-origin" onError={() => setPlayerError(true)} src={`https://www.youtube.com/embed/${films[selected].id}?autoplay=1&rel=0&playsinline=1&vq=hd1080&hd=1&quality=hd1080&modestbranding=1&enablejsapi=1&origin=${encodeURIComponent(origin)}&widget_referrer=${encodeURIComponent(origin)}`} /><a className="player-fallback" target="_blank" rel="noreferrer" href={`https://www.youtube.com/watch?v=${films[selected].id}`}>{playerError ? "Player unavailable — watch on YouTube" : "Open film on YouTube"}</a></>}</DialogContent></Dialog>
+    <Dialog open={bookingOpen} onOpenChange={setBookingOpen}><DialogContent className="booking-dialog"><DialogTitle>Let’s make something unforgettable.</DialogTitle><DialogDescription>Now booking wedding films, engagement stories and jewellery product shoots.</DialogDescription><a className="booking-instagram" href={socialLinks[0].href} target="_blank" rel="noreferrer">BOOK THROUGH INSTAGRAM <span aria-hidden="true">↗</span></a></DialogContent></Dialog>
   </main>;
 }
