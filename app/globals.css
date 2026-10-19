@@ -80,8 +80,8 @@ main { overflow:clip; }
 .center-mark .wordmark>span { color:transparent; -webkit-text-stroke:1px var(--red); }
 .opening-panel { position:absolute; inset:0; z-index:4; overflow:hidden; background:#211813; transform-origin:50% 50%; will-change:transform; }
 .cinema-media { width:100%; height:100%; position:relative; background:#17110e; overflow:hidden; }
-/* Poster is 480×360 hqdefault stretched to 2048 — keep it crisp while HD stream loads */
-.cinema-media>img { width:100%; height:100%; object-fit:cover; object-position:center; transform: translateZ(0); image-rendering: -webkit-optimize-contrast; filter: saturate(1.06) contrast(1.06) brightness(1.02); }
+/* High-resolution YouTube poster stays visible until the HD excerpt is moving. */
+.cinema-media>img { width:100%; height:100%; object-fit:cover; object-position:center; transform: translateZ(0); image-rendering:auto; filter: saturate(1.04) contrast(1.025) brightness(1.01); }
 /* YouTube iframe is rendered at --film-width cover size for cinematic crop; force GPU layer for smooth HD decode */
 .cinema-media iframe { position:absolute; width:100%; height:100%; left:0; top:0; border:0; opacity:0; pointer-events:none; transition:opacity .9s ease; transform: translateZ(0); }
 .cinema-media[data-stream-playing="true"] iframe { opacity:1; }
@@ -317,7 +317,7 @@ em { font-family:Georgia,"Times New Roman",serif; font-weight:400; }
 .header-logo .wordmark { filter:brightness(0) invert(1); }
 .site-header[data-tone="dark"] .header-logo .wordmark { filter:brightness(0); }
 .intro-mark { font-size:clamp(230px,27vw,400px); }
-.wordmark { width:2.1em; }
+.wordmark { width:2.4em; overflow:visible; }
 .wordmark>span { letter-spacing:.055em; transform:scaleX(.66); }
 .hero-title .wordmark { font-size:90px; }
 .suite-heading { display:flex; align-items:baseline; justify-content:space-between; gap:24px; padding:25px 0 20px; margin-bottom:50px; border-top:1px solid #48423f; }
@@ -329,8 +329,8 @@ em { font-family:Georgia,"Times New Roman",serif; font-weight:400; }
 .empty-suite h2 { font-size:clamp(27px,3vw,42px); }
 .empty-suite>span { font-size:9px; }
 @media(max-width:699px) {
-  .intro-mark { font-size:170px; }
-  .wordmark { width:2.1em; }
+  .intro-mark { font-size:min(170px, calc((100vw - 32px) / 2.4)); }
+  .wordmark { width:2.4em; }
   .hero-title .wordmark { font-size:76px; }
   .suite-heading { align-items:flex-start; flex-direction:column; gap:8px; margin-bottom:38px; }
   .film-suite>.suite-heading { margin-bottom:50px; }

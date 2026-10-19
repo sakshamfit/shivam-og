@@ -59,8 +59,18 @@ export function CinemaMedia({ image, id, start, end, className = "", priority = 
   const [active, setActive] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [mediaState, setMediaState] = useState("idle");
+  const [posterQuality, setPosterQuality] = useState<"maxres" | "sd" | "local">("maxres");
   const loopStart = start ?? 0;
   const loopEnd = end ?? loopStart + 20;
+  const posterSrc = posterQuality === "maxres"
+    ? `https://i.ytimg.com/vi/${id}/maxresdefault.jpg`
+    : posterQuality === "sd"
+      ? `https://i.ytimg.com/vi/${id}/sddefault.jpg`
+      : `/media/${image}`;
+  const refinePoster = (element: HTMLImageElement) => {
+    if (posterQuality === "maxres" && element.naturalWidth < 960) setPosterQuality("sd");
+    else if (posterQuality === "sd" && element.naturalWidth < 600) setPosterQuality("local");
+  };
 
   useEffect(() => {
     pausedRef.current = paused;
@@ -229,12 +239,15 @@ export function CinemaMedia({ image, id, start, end, className = "", priority = 
       data-priority={priority}
     >
       <img
-        src={`/media/${image}`}
+        src={posterSrc}
         alt={label}
         width="2048"
         height="1152"
-        // high-res rendering hint — the poster is only visible before the hd stream takes over
-        style={{ imageRendering: "auto" } as React.CSSProperties}
+        // Prefer YouTube's 1280px poster, then its 640px version, and use the
+        // bundled still only when neither high-resolution thumbnail exists.
+        onLoad={(event) => refinePoster(event.currentTarget)}
+        onError={() => setPosterQuality((quality) => quality === "maxres" ? "sd" : quality === "sd" ? "local" : quality)}
+        style={{ imageRendering: "auto" }}
         loading={priority ? "eager" : "lazy"}
         fetchPriority={priority ? "high" : "auto"}
         draggable={false}
