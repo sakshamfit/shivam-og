@@ -186,8 +186,8 @@ export default function Home() {
       gsap.set(".red-field", { clipPath: "circle(0% at 50% 50%)" });
       gsap.set(".red-crescent", { autoAlpha: 0, scale: 0.6, rotation: -70 });
       // MASTER TIMELINE — pinned to .journey; scroll position is the playhead.
-      const tl = gsap.timeline({ defaults: { ease: "power2.inOut" }, onUpdate: (self) => {
-        const active = self.time() <= 3.6;
+      const tl = gsap.timeline({ defaults: { ease: "power2.inOut" }, onUpdate: function (this: gsap.core.Timeline) {
+        const active = this.time() <= 3.6;
         setOrbitActive((current) => current === active ? current : active);
       }, scrollTrigger: { trigger: ".journey", start: "top top", end: "bottom bottom", scrub: 0.55, invalidateOnRefresh: true } });
       tl.to(".hero-copy, .hero-footer", { opacity: 0, y: -35, duration: 0.55 }, 0.15)
