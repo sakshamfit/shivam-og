@@ -445,3 +445,5 @@ html,body { max-width:100%; overflow-x:clip; }
   .hero-footer { bottom:14%; }
   .intro-sound-toggle { bottom:29%; }
 }
+.intro-mark { left:0!important; right:0!important; width:auto!important; display:flex; align-items:center; justify-content:center; text-align:center; }
+.intro-mark>span { margin-inline:auto; }
