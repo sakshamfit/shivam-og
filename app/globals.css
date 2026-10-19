@@ -300,7 +300,7 @@ em { font-family:Georgia,"Times New Roman",serif; font-weight:400; }
   .booking-toggle { min-height:34px; padding:0 8px; gap:4px; font-size:8px; }
   .menu-toggle { gap:5px; font-size:8px; }
   .menu-toggle>span { width:15px; }
-  .intro-sound-toggle { right:6%; bottom:19%; font-size:8px; padding:10px 12px; }
+  .intro-sound-toggle { right:6%; bottom:24%; font-size:8px; padding:10px 12px; }
   .booking-dialog { padding:28px!important; }
 }
 .wordmark { height:.93em; }
@@ -419,7 +419,7 @@ html,body { max-width:100%; overflow-x:clip; }
   .film-section-label span:first-child { max-width:42%; }
   .film-section-label span:last-child { max-width:54%; }
   .chapter-caption p { max-width:66%; }
-  .intro-sound-toggle { bottom:17%; }
+  .intro-sound-toggle { bottom:29%; }
 }
 @media(max-height:520px) and (orientation:landscape) {
   .site-header { height:58px; }
