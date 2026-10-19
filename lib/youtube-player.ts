@@ -1,8 +1,9 @@
-/* PAWAN KALYAN SHOWCASE WEBSITE — single shared loader for the YouTube iframe
- * API. The script tag is appended once per page and the resulting promise is
+/* SHIVAM PHOTOGRAPHY — single shared loader for the YouTube iframe API.
+ * The script tag is appended once per page and the resulting promise is
  * memoised, so every CinemaMedia panel reuses one API instance instead of
  * racing to load it. Failures (blocked network, 15s timeout) reject so the
- * caller can fall back to the poster still and bundled clip. */
+ * caller can fall back to the poster still. */
+
 export type YouTubePlayer = {
   mute(): void;
   unMute(): void;
@@ -12,20 +13,31 @@ export type YouTubePlayer = {
   seekTo(seconds: number, allowSeekAhead: boolean): void;
   getCurrentTime(): number;
   getPlayerState(): number;
+  getPlaybackQuality(): string;
+  getAvailableQualityLevels(): string[];
+  setPlaybackQuality(quality: string): void;
+  setPlaybackQualityRange(min: string, max: string): void;
+  getDuration(): number;
+  getVideoLoadedFraction(): number;
   destroy(): void;
+  // allow extra YouTube API surface without TS error
+  [k: string]: unknown;
 };
 type PlayerEvent = { target: YouTubePlayer; data: number };
 type YouTubeAPI = {
-  Player: new (element: HTMLElement, options: {
-    videoId: string;
-    playerVars: Record<string, string | number>;
-    events: {
-      onReady(event: PlayerEvent): void;
-      onStateChange(event: PlayerEvent): void;
-      onError(event: PlayerEvent): void;
-      onAutoplayBlocked(event: PlayerEvent): void;
-    };
-  }) => YouTubePlayer;
+  Player: new (
+    element: HTMLElement,
+    options: {
+      videoId: string;
+      playerVars: Record<string, string | number>;
+      events: {
+        onReady(event: PlayerEvent): void;
+        onStateChange(event: PlayerEvent): void;
+        onError(event: PlayerEvent): void;
+        onAutoplayBlocked?(event: PlayerEvent): void;
+      };
+    },
+  ) => YouTubePlayer;
 };
 declare global {
   interface Window {
@@ -50,7 +62,10 @@ export function loadYouTubePlayer(): Promise<YouTubeAPI> {
       if (window.YT?.Player) resolve(window.YT);
       else reject(new Error("Film player unavailable"));
     };
-    script.onerror = () => { clearTimeout(timeout); reject(new Error("Film player unavailable")); };
+    script.onerror = () => {
+      clearTimeout(timeout);
+      reject(new Error("Film player unavailable"));
+    };
     document.head.appendChild(script);
   });
   return api;
