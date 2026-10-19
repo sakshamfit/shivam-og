@@ -432,3 +432,13 @@ html,body { max-width:100%; overflow-x:clip; }
   .intro-sound-toggle { right:4%; bottom:15%; padding:8px 10px; }
   .film-image { height:min(68svh,340px); }
 }
+.hero-footer { bottom:14%; }
+.intro-sound-toggle { bottom:22%; }
+@media(max-width:699px) {
+  .hero-footer { bottom:14%; }
+  .intro-sound-toggle { bottom:24%; }
+}
+@media(max-width:380px) {
+  .hero-footer { bottom:14%; }
+  .intro-sound-toggle { bottom:29%; }
+}
