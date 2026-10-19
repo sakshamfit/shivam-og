@@ -447,3 +447,5 @@ html,body { max-width:100%; overflow-x:clip; }
 }
 .intro-mark { left:0!important; right:0!important; width:auto!important; display:flex; align-items:center; justify-content:center; text-align:center; }
 .intro-mark>span { margin-inline:auto; }
+
+@media(max-width:699px) { .intro-mark { font-size:min(150px,calc((100vw - 48px)/3.1))!important; } }
