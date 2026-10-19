@@ -374,8 +374,11 @@ html,body { max-width:100%; overflow-x:clip; }
   .site-header { height:78px; padding-inline:4%; }
   .header-film { font-size:10px; }
   .header-logo { font-size:34px; }
-  .header-actions { gap:12px; }
-  .social-links { gap:7px; }
+  .header-logo .wordmark { font-size:34px; }
+  .header-actions { gap:9px; }
+  .social-links { gap:5px; }
+  .social-link { width:22px; }
+  .social-link svg { width:16px; height:16px; }
   .hero-copy { top:27%; left:5%; width:80%; }
   .hero-copy h1 { font-size:clamp(56px,8vw,88px); }
   .hero-title { margin-top:24px; }
