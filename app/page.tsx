@@ -102,7 +102,6 @@ function IntroVideo({ paused, orbitActive }: { paused: boolean; orbitActive: boo
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
   const [soundPreference, setSoundPreference] = useState<"auto" | "on" | "off">("auto");
-  const [posterQuality, setPosterQuality] = useState<"maxres" | "sd" | "local">("maxres");
   const [mediaState, setMediaState] = useState("loading");
   useEffect(() => {
     const video = videoRef.current;
@@ -137,14 +136,9 @@ function IntroVideo({ paused, orbitActive }: { paused: boolean; orbitActive: boo
     setMuted(video.muted);
     if (enable) void video.play().catch(() => { video.muted = true; setMuted(true); });
   };
-  const poster = posterQuality === "maxres"
-    ? "https://i.ytimg.com/vi/uXhkusf0Tp0/maxresdefault.jpg"
-    : posterQuality === "sd"
-      ? "https://i.ytimg.com/vi/uXhkusf0Tp0/sddefault.jpg"
-      : "/media/uXhkusf0Tp0.jpg";
   return <div className="intro-video-wrap">
     <div className="cinema-media intro-cinema-media" data-priority="true" data-playing={playing} data-local-playing={playing} data-media-state={playing ? "playing" : mediaState} data-paused={paused}>
-      <img src={poster} alt="" width="1920" height="1080" fetchPriority="high" onLoad={(event) => { if (posterQuality === "maxres" && event.currentTarget.naturalWidth < 960) setPosterQuality("sd"); else if (posterQuality === "sd" && event.currentTarget.naturalWidth < 600) setPosterQuality("local"); }} onError={() => setPosterQuality((quality) => quality === "maxres" ? "sd" : quality === "sd" ? "local" : quality)} />
+      <img src="/media/intro-poster.jpg" alt="" width="1280" height="720" fetchPriority="high" />
       <video ref={videoRef} className="cinema-local-video intro-video" src="/media/intro.mp4" autoPlay muted={muted} loop playsInline preload="auto" aria-label="Shivam Photography opening film" onCanPlay={() => setMediaState("ready")} onPlaying={() => { setPlaying(true); setMediaState("playing"); }} onPause={() => setPlaying(false)} onError={() => setMediaState("unavailable")} />
     </div>
     <button className="intro-sound-toggle" onClick={toggleSound} aria-label={muted ? "Turn opening video sound on" : "Mute opening video sound"}>{muted ? "SOUND OFF · TAP TO ENABLE" : "SOUND ON"}<span aria-hidden="true">{muted ? "↗" : "♫"}</span></button>
